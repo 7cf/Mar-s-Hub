@@ -1,0 +1,315 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Create a ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AnimationGui"
+screenGui.Parent = playerGui
+
+-- Create a Frame for the GUI background
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0.3, 0, 0.4, 0)
+frame.Position = UDim2.new(0.35, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)  -- Dark gray
+frame.BorderSizePixel = 0
+frame.ClipsDescendants = true
+frame.Parent = screenGui
+
+-- Round the corners of the frame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = frame
+
+-- Make the Frame draggable
+local dragger = Instance.new("TextButton")
+dragger.Size = UDim2.new(1, 0, 1, 0)
+dragger.Position = UDim2.new(0, 0, 0, 0)
+dragger.BackgroundTransparency = 1
+dragger.Text = ""
+dragger.Parent = frame
+
+local dragging = false
+local dragInput, mousePos, framePos
+
+dragger.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = frame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+dragger.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - mousePos
+        frame.Position = UDim2.new(
+            framePos.X.Scale,
+            framePos.X.Offset + delta.X,
+            framePos.Y.Scale,
+            framePos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Create a TextLabel for the title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0.1, 0)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundColor3 = Color3.fromRGB(100, 100, 100)  -- Light gray
+title.Text = "Mar's R6 Hub"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextStrokeTransparency = 0.8
+title.TextScaled = true
+title.Parent = frame
+
+-- Create a ScrollingFrame for the animations list
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, 0, 0.8, 0)
+scrollingFrame.Position = UDim2.new(0, 0, 0.1, 0)
+scrollingFrame.BackgroundColor3 = Color3.fromRGB(70, 70, 70)  -- Medium gray
+scrollingFrame.ScrollBarThickness = 12
+scrollingFrame.ClipsDescendants = false
+scrollingFrame.Parent = frame
+
+-- Round the corners of the scrolling frame
+local scrollCorner = Instance.new("UICorner")
+scrollCorner.CornerRadius = UDim.new(0, 8)
+scrollCorner.Parent = scrollingFrame
+
+-- Create a UIListLayout for the ScrollingFrame
+local listLayout = Instance.new("UIListLayout")
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Padding = UDim.new(0, 5)
+listLayout.Parent = scrollingFrame
+
+-- Update the CanvasSize to fit the contents
+local function updateCanvasSize()
+    local totalHeight = 0
+    for _, button in ipairs(scrollingFrame:GetChildren()) do
+        if button:IsA("TextButton") then
+            totalHeight = totalHeight + button.Size.Y.Offset + listLayout.Padding.Offset
+        end
+    end
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+end
+
+-- Function to create animation buttons
+local function createAnimationButton(titleText, animationId)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, -10, 0, 50)
+    button.BackgroundColor3 = Color3.fromRGB(90, 90, 90)  -- Light gray
+    button.Text = titleText
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.TextScaled = true
+    button.Parent = scrollingFrame
+
+    -- Create the Animation instance
+    local animation = Instance.new("Animation")
+    animation.AnimationId = animationId
+
+    -- Load the Animation onto the Humanoid
+    local animationTrack = humanoid:LoadAnimation(animation)
+
+    -- Connect button click event
+    local playing = false
+    button.MouseButton1Click:Connect(function()
+        if playing then
+            animationTrack:Stop()
+            playing = false
+        else
+            animationTrack:Play()
+            playing = true
+        end
+        print("Toggled Animation: " .. titleText .. " (" .. animationId .. ")")
+    end)
+
+    updateCanvasSize()
+end
+
+-- List of animations
+local animations = {
+        {Title = "Crouch", AnimationId = "rbxassetid://287325678"},
+    {Title = "Weird", AnimationId = "rbxassetid://248336677"},
+    {Title = "nolegs", AnimationId = "rbxassetid://248336459"},
+    {Title = "Poseit", AnimationId = "rbxassetid://248336163"},
+    {Title = "PlungerThrow", AnimationId = "rbxassetid://259438880"},
+    {Title = "Slap", AnimationId = "rbxassetid://273717479"},
+    {Title = "LayBetter", AnimationId = "rbxassetid://282574440"},
+    {Title = "Look", AnimationId = "rbxassetid://283119655"},
+    {Title = "Tilt head", AnimationId = "rbxassetid://283545583"},
+    {Title = "Kickboard?", AnimationId = "rbxassetid://160737244"},
+    {Title = "Sit2?", AnimationId = "rbxassetid://168138731"},
+    {Title = "SCREAM1!1@3$", AnimationId = "rbxassetid://180611870"},
+    {Title = "take a dunki", AnimationId = "rbxassetid://182724289"},
+    {Title = "Lay down", AnimationId = "rbxassetid://182749109"},
+    {Title = "Happi Dance Walk", AnimationId = "rbxassetid://248335946"},
+    {Title = "FloatingHead", AnimationId = "rbxassetid://121572214"},
+    {Title = "BALLOON 02", AnimationId = "rbxassetid://148840371"},
+    {Title = "BALLOONFLOAT", AnimationId = "rbxassetid://148831003"},
+    {Title = "SmellyRun", AnimationId = "rbxassetid://30235165"},
+    {Title = "BigSwordHit", AnimationId = "rbxassetid://27441775"},
+    {Title = "GOAL", AnimationId = "rbxassetid://28488254"},
+    {Title = "Trident Stab", AnimationId = "rbxassetid://30704021"},
+    {Title = "HoldStaff", AnimationId = "rbxassetid://27758613"},
+    {Title = "UpperCut", AnimationId = "rbxassetid://28160593"},
+    {Title = "scared", AnimationId = "rbxassetid://180612465"},
+    {Title = "StaffUp", AnimationId = "rbxassetid://27432691"},
+    {Title = "StaffSpin", AnimationId = "rbxassetid://27763939"},
+    {Title = "Partyanimate", AnimationId = "rbxassetid://33796059"},
+    {Title = "PimpSlap", AnimationId = "rbxassetid://30188122"},
+    {Title = "Dance", AnimationId = "rbxassetid://27789359"},
+    {Title = "TwoHandSwing", AnimationId = "rbxassetid://32659706"},
+    {Title = "TwohandSword", AnimationId = "rbxassetid://27432559"},
+    {Title = "BarrelThrow", AnimationId = "rbxassetid://31020869"},
+    {Title = "BearHug", AnimationId = "rbxassetid://27432686"},
+    {Title = "SwrdSwinJump", AnimationId = "rbxassetid://32659699"},
+    {Title = "WalkStaff", AnimationId = "rbxassetid://27759788"},
+    {Title = "Moonwalk", AnimationId = "rbxassetid://30196114"},
+    {Title = "SoccerWalk", AnimationId = "rbxassetid://28440069"},
+    {Title = "HeadThrow", AnimationId = "rbxassetid://35154961"},
+    {Title = "Beatbox..?", AnimationId = "rbxassetid://45504977"},
+    {Title = "Stanky Legs", AnimationId = "rbxassetid://87986341"},
+    {Title = "Taunt", AnimationId = "rbxassetid://74901237"},
+    {Title = "FrisbThrow", AnimationId = "rbxassetid://174347769"},
+    {Title = "BarrelRoll", AnimationId = "rbxassetid://136801964"},
+    {Title = "MaceSwing", AnimationId = "rbxassetid://168801331"},
+    {Title = "idek taunt", AnimationId = "rbxassetid://168744201"},
+    {Title = "GrenadeLoop", AnimationId = "rbxassetid://168160500"},
+    {Title = "FireBreath", AnimationId = "rbxassetid://163209885"},
+    {Title = "CymbalSlam", AnimationId = "rbxassetid://162250536"},
+    {Title = "Hold dat", AnimationId = "rbxassetid://161268368"},
+    {Title = "Bow Reload", AnimationId = "rbxassetid://159934882"},
+    {Title = "Hold dat 2", AnimationId = "rbxassetid://225975820"},
+    {Title = "Keyframeloop", AnimationId = "rbxassetid://54144120"},
+    {Title = "StartRest6", AnimationId = "rbxassetid://75416338"},
+    {Title = "Roar", AnimationId = "rbxassetid://75354915"},
+    {Title = "SimpleSlash", AnimationId = "rbxassetid://74799600"},
+    {Title = "Summon", AnimationId = "rbxassetid://93693205"},
+    {Title = "ZombieAttack", AnimationId = "rbxassetid://180416148"},
+    {Title = "ZombieIdle", AnimationId = "rbxassetid://183294396"},
+    {Title = "Test1", AnimationId = "rbxassetid://54145508"},
+    {Title = "Superman?", AnimationId = "rbxassetid://160725720"},
+    {Title = "Drink", AnimationId = "rbxassetid://163203876"},
+    {Title = "GravitySlam", AnimationId = "rbxassetid://33169573"},
+    {Title = "SoccerKick", AnimationId = "rbxassetid://28458752"},
+    {Title = "Slash", AnimationId = "rbxassetid://28090109"},
+    {Title = "SwordThrust", AnimationId = "rbxassetid://32659703"},
+    {Title = "Drink/Salute", AnimationId = "rbxassetid://28492456"},
+    {Title = "Trident Stab", AnimationId = "rbxassetid://30704021"},
+    {Title = "Fire Wall", AnimationId = "rbxassetid://32326246"},
+    {Title = "KickBack", AnimationId = "rbxassetid://33686061"},
+    {Title = "Chop", AnimationId = "rbxassetid://33169596"},
+    {Title = "Launch Hand", AnimationId = "rbxassetid://33323745"},
+    {Title = "TridentThrow", AnimationId = "rbxassetid://30704030"},
+    {Title = "Saxtest", AnimationId = "rbxassetid://30257281"},
+    {Title = "Slingshot", AnimationId = "rbxassetid://33248324"},
+    {Title = "Hornblow", AnimationId = "rbxassetid://29349343"},
+    {Title = "Throw", AnimationId = "rbxassetid://28604759"},
+    {Title = "StaffDuoHit", AnimationId = "rbxassetid://27763344"},
+    {Title = "FireRing", AnimationId = "rbxassetid://32326245"}
+    -- Animation list as before
+}
+
+-- Add animations to the GUI
+for _, anim in ipairs(animations) do
+    createAnimationButton(anim.Title, anim.AnimationId)
+end
+
+-- Create the Reset Button
+local resetButton = Instance.new("TextButton")
+resetButton.Size = UDim2.new(1, 0, 0.1, 0)
+resetButton.Position = UDim2.new(0, 0, 0.9, 0)
+resetButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)  -- Light gray
+resetButton.Text = "Reset Animations"
+resetButton.TextColor3 = Color3.new(1, 1, 1)
+resetButton.TextScaled = true
+resetButton.Parent = frame
+
+resetButton.MouseButton1Click:Connect(function()
+    for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+        track:Stop()
+    end
+    print("All animations stopped.")
+end)
+
+-- Create the Minimize Button
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0.1, 0, 0.1, 0)
+minimizeButton.Position = UDim2.new(1, -50, 0, 0)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)  -- Light gray
+minimizeButton.Text = "_"
+minimizeButton.TextColor3 = Color3.new(1, 1, 1)
+minimizeButton.TextScaled = true
+minimizeButton.Parent = frame
+
+local minimized = false
+local minimizedPosition = UDim2.new(1, -50, 1, -50)
+
+minimizeButton.MouseButton1Click:Connect(function()
+    if not minimized then
+        frame.Position = minimizedPosition
+        frame.Size = UDim2.new(0.2, 0, 0.2, 0)
+        minimized = true
+    else
+        frame.Position = UDim2.new(0.35, 0, 0.3, 0)
+        frame.Size = UDim2.new(0.3, 0, 0.4, 0)
+        minimized = false
+    end
+end)
+
+-- Create the M Button to restore the GUI
+local restoreButton = Instance.new("TextButton")
+restoreButton.Size = UDim2.new(0.05, 0, 0.1, 0)
+restoreButton.Position = UDim2.new(1, -20, 0.5, -50)
+restoreButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)  -- Light gray
+restoreButton.Text = "M"
+restoreButton.TextColor3 = Color3.new(1, 1, 1)
+restoreButton.TextStrokeTransparency = 0
+restoreButton.TextScaled = true
+restoreButton.Parent = playerGui
+restoreButton.Visible = false
+
+restoreButton.MouseButton1Click:Connect(function()
+    frame.Position = UDim2.new(0.35, 0, 0.3, 0)
+    frame.Size = UDim2.new(0.3, 0, 0.4, 0)
+    minimized = false
+    restoreButton.Visible = false
+end)
+
+-- Show the M Button when minimized
+frame:GetPropertyChangedSignal("Position"):Connect(function()
+    if frame.Position == minimizedPosition then
+        restoreButton.Visible = true
+    else
+        restoreButton.Visible = false
+    end
+end)
+
+-- Create the Close Button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0.1, 0, 0.1, 0)
+closeButton.Position = UDim2.new(1, -50, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)  -- Red
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+closeButton.TextScaled = true
+closeButton.Parent = frame
+
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+    print("GUI closed.")
+end)
